@@ -48,7 +48,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(len(data['questions']))
         self.assertTrue(data['total_questions'])
         self.assertTrue(len(data['categories']))
-        self.assertTrue(len(data['currentCategory']))
+        self.assertTrue(len(data['current_category']))
 
     def test_404_sent_requesting_beyond_valid_page(self):
         res = self.client().get('/questions?page=80')
@@ -130,7 +130,7 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(res.status_code, 404)
         self.assertEqual(data['success'], False)
-        self.assertEqual(data['message'], 'bad request')
+        self.assertEqual(data['message'], 'resource not found')
 
 
     #Test play quiz operation

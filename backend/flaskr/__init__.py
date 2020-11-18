@@ -225,7 +225,7 @@ def create_app(test_config=None):
             'question': random_question
               })
     except:
-      abort(422)
+      abort(400)
   '''
   @TODO: 
   Create error handlers for all expected errors 
@@ -235,7 +235,7 @@ def create_app(test_config=None):
   def not_found(error):
     return jsonify({
       'success': False,
-      'message': "resource not found ",
+      'message': "resource not found",
       'error': 404
     }), 404
 
