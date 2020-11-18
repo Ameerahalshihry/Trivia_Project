@@ -7,13 +7,13 @@ import random
 from models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
-
-def paginate_questions(request, selection_questions):
+#paginate questions every 10 questions
+def paginate_questions(request, all_questions):
     page = request.args.get('page', 1, type=int)
     start = (page -1 ) * QUESTIONS_PER_PAGE
     end = start + QUESTIONS_PER_PAGE
 
-    formatted_questions = [question.format() for question in selection_questions]
+    formatted_questions = [question.format() for question in all_questions]
     current_questions = formatted_questions[start:end]
 
     return current_questions
@@ -26,7 +26,7 @@ def create_app(test_config=None):
   '''
   @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
   '''
-  CORS(app)
+  CORS(app, resources={'/': {'origins': '*'}})
   '''
   @TODO: Use the after_request decorator to set Access-Control-Allow
   '''
@@ -44,14 +44,12 @@ def create_app(test_config=None):
   @app.route('/categories')
   def get_categories():
     categories = Category.query.all()
-    formatted_categories = [category.format() for category in categories]
-
-    if len(categories) == 0:
-      abort(404)
 
     return jsonify({
       'success':True,
-      'categories': formatted_categories })
+      # return categories as object {'id': 'type'}
+      'categories': {category.id: category.type for category in categories}
+            })
 
   '''
   @TODO: 
@@ -67,16 +65,20 @@ def create_app(test_config=None):
   '''
   @app.route('/questions')
   def get_questions():
-    selection_questions = Question.query.all()
-    current_questions = paginate_questions(request, selection_questions)
-
+    all_questions = Question.query.all()
+    #paginate questions every 10 questions
+    current_questions = paginate_questions(request, all_questions)
+    categories = Category.query.all()
+    
     if len (current_questions) == 0:
       abort(404)
 
     return jsonify({
       'success': True,
       'questions': current_questions,
-      'total_questions': len(selection_questions)
+      'total_questions': len(all_questions),
+      'categories': {category.id: category.type for category in categories},
+      'current_category': ''
     })
   '''
   @TODO: 
@@ -153,7 +155,9 @@ def create_app(test_config=None):
     
     return jsonify({
       'success': True,
-      'questions': [question.format() for question in search_result]
+      'questions': [question.format() for question in search_result],
+      'total_questions':len(search_result),
+      'current_category':''
     })
 
   '''
@@ -175,7 +179,9 @@ def create_app(test_config=None):
 
     return jsonify({
       'success': True,
-      'questions': [question.format() for question in questions_by_specific_category]
+      'questions': [question.format() for question in questions_by_specific_category],
+      'total_questions': len(questions_by_specific_category),
+      'current_category':''
     })
   
   '''
@@ -189,14 +195,76 @@ def create_app(test_config=None):
   one question at a time is displayed, the user is allowed to answer
   and shown whether they were correct or not. 
   '''
+  @app.route('/quizzes', methods=['POST'])
+  def play_questions_quiz():
+    try:
+      body = request.get_json()
+      previous_questions = body.get('previous_questions')
+      quiz_category= body.get('quiz_category')
 
+      #play based on select ALL category
+      if (quiz_category['id'] == 0):
+        questions = Question.query.all()
+      #play based on select specific category
+      else:
+        questions = Question.query.filter_by(category=quiz_category['id']).all()
 
+      #get random question to play quiz
+      total_questions= len(questions)
+      def get_random():
+        #random.randrange(start, stop[, step]) Return a randomly selected element from range(start, stop, step)
+        return questions[random.randrange(0, total_questions, 1)]
+
+      random_question= get_random()
+      #define flag to check if the random question is asked before so generate another random question to play quiz until finish all questions
+      used_question= True
+      while used_question:
+        if random_question.id in previous_questions:
+          random_question= get_random()
+        else:
+          used_question= False
+
+      return jsonify({
+            'success': True,
+            'question': random_question.format()
+              })
+    except:
+      abort(422)
   '''
   @TODO: 
   Create error handlers for all expected errors 
   including 404 and 422. 
   '''
+  @app.errorhandler(404)
+  def not_found(error):
+    return jsonify({
+      'success': False,
+      'message': "resource not found ",
+      'error': 404
+    }), 404
+
+  @app.errorhandler(422)
+  def unprocessable(error):
+    return jsonify({
+      'success': False,
+      'message': "unprocessable",
+      'error': 422
+    }), 422
+
+  @app.errorhandler(405)
+  def method_not_allowed(error):
+    return jsonify({
+      'success': False,
+      'message': "method not allowed",
+      'error': 405
+    }), 405
+
+  @app.errorhandler(400)
+  def bad_request(error):
+    return jsonify({
+      'success': False,
+      'message': "bad request",
+      'error': 400
+    }), 400
   
   return app
-
-    
