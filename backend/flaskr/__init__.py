@@ -202,31 +202,27 @@ def create_app(test_config=None):
       previous_questions = body.get('previous_questions')
       quiz_category= body.get('quiz_category')
 
-      #play based on select ALL category
+      #play based on select ALL category return all questions that not in previous questions
       if (quiz_category['id'] == 0):
-        questions = Question.query.all()
+        questions = Question.query.filter(Question.id.notin_((previous_questions))).all()
       #play based on select specific category
       else:
-        questions = Question.query.filter_by(category=quiz_category['id']).all()
+        questions = Question.query.filter_by(category=quiz_category['id']).filter(Question.id.notin_((previous_questions))).all()
 
       #get random question to play quiz
       total_questions= len(questions)
       def get_random():
         #random.randrange(start, stop[, step]) Return a randomly selected element from range(start, stop, step)
-        return questions[random.randrange(0, total_questions, 1)]
+        if len(questions) > 0 :
+          return questions[random.randrange(0, total_questions, 1)].format()
+        else:
+          return None
 
       random_question= get_random()
-      #define flag to check if the random question is asked before so generate another random question to play quiz until finish all questions
-      used_question= True
-      while used_question:
-        if random_question.id in previous_questions:
-          random_question= get_random()
-        else:
-          used_question= False
 
       return jsonify({
             'success': True,
-            'question': random_question.format()
+            'question': random_question
               })
     except:
       abort(422)
