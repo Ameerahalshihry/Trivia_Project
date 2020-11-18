@@ -41,6 +41,11 @@ def create_app(test_config=None):
   Create an endpoint to handle GET requests 
   for all available categories.
   '''
+  # @app.route('/')
+  # def fun():
+  #   return "hi"
+
+    
   @app.route('/categories')
   def get_categories():
     categories = Category.query.all()
@@ -150,8 +155,8 @@ def create_app(test_config=None):
     search_term = body.get('searchTerm')
     search_result = Question.query.filter(Question.question.ilike(f'%{search_term}%')).all()
 
-    if (len(search_result) == 0):
-      abort(404)
+    # if (len(search_result) == 0):
+    #   abort(404)
     
     return jsonify({
       'success': True,

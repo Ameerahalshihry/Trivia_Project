@@ -14,7 +14,7 @@ class TriviaTestCase(unittest.TestCase):
         """Define test variables and initialize app."""
         self.app = create_app()
         self.client = self.app.test_client
-        self.database_name = "trivia_test"
+        self.database_name = "trivia"
         self.database_path = "postgres://{}/{}".format('localhost:5432', self.database_name)
         setup_db(self.app, self.database_path)
         self.new_question = {
@@ -48,7 +48,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(len(data['questions']))
         self.assertTrue(data['total_questions'])
         self.assertTrue(len(data['categories']))
-        self.assertTrue(len(data['current_category']))
+        
 
     def test_404_sent_requesting_beyond_valid_page(self):
         res = self.client().get('/questions?page=80')
@@ -60,12 +60,12 @@ class TriviaTestCase(unittest.TestCase):
 
     #Test delete question operation
     def test_delete_question(self):
-        res = self.client().delete('/questions/1')
+        res = self.client().delete('/questions/9')
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
-        self.assertEqual(data['deleted'], 1)
+        self.assertEqual(data['deleted'], 9)
         
 
     def test_422_if_question_does_not_exist(self):
@@ -95,16 +95,16 @@ class TriviaTestCase(unittest.TestCase):
 
     #Test search question operation
     def test_get_question_search_with_results(self):
-        res = self.client().post('/questions', json={'search': 'city'})
+        res = self.client().post('/questions/search', json={'searchTerm': 'city'})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertTrue(data['total_questions'])
-        self.assertEqual(len(data['questions']), 1)
+        self.assertEqual(len(data['questions']), 3)
 
     def test_get_question_search_without_results(self):
-        res = self.client().post('/questions', json={'search': 'bananElyas'})
+        res = self.client().post('/questions/search', json={'searchTerm': 'bananElyas'})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -121,7 +121,6 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertTrue(len(data['questions']))
         self.assertTrue(data['total_questions'])
-        self.assertTrue(len(data['current_category']))
 
     #Test get questions based on invalid category
     def test_400_get_questions_by_specific_category_fails(self):
